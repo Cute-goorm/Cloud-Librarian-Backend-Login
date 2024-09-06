@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 @RequiredArgsConstructor
+@Slf4j
 public class JWTFilter extends OncePerRequestFilter {
     private final JWTUtil jwtUtil;
     @Override
@@ -26,7 +28,7 @@ public class JWTFilter extends OncePerRequestFilter {
         // Authorization 헤더 검증
         // Authorization 헤더가 비어있거나 "Bearer " 로 시작하지 않은 경우
         if(authorization == null || !authorization.startsWith("Bearer ")){
-            System.out.println("token null");
+            log.warn("token null");
             // 토큰이 유효하지 않으므로 request와 response를 다음 필터로 넘겨줌
             filterChain.doFilter(request, response);
             // 메서드 종료
@@ -37,7 +39,7 @@ public class JWTFilter extends OncePerRequestFilter {
         // token 소멸 시간 검증
         // 유효기간이 만료한 경우
         if(jwtUtil.isExpired(token)){
-            System.out.println("token expired");
+            log.warn("token expired");
             filterChain.doFilter(request, response);
             // 메서드 종료
             return;
