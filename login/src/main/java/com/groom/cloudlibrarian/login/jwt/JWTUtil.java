@@ -42,10 +42,17 @@ public class JWTUtil {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());
     }
     // 토큰 생성 메서드
-    public String createJwt(String loginId, String role, Long expiredMs) {
+    public String createAccessToken(String loginId, String role, Long expiredMs) {
         return Jwts.builder()
                 .claim("loginId", loginId)
                 .claim("role", role)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + expiredMs))
+                .signWith(secretKey)
+                .compact();
+    }
+    public String createRefreshToken(Long expiredMs) {
+        return Jwts.builder()
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))
                 .signWith(secretKey)

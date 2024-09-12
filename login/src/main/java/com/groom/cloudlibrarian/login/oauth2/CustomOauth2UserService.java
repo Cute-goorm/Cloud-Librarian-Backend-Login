@@ -3,17 +3,22 @@ package com.groom.cloudlibrarian.login.oauth2;
 import com.groom.cloudlibrarian.login.dto.Member;
 import com.groom.cloudlibrarian.login.MemberRepository;
 import com.groom.cloudlibrarian.login.MemberRole;
+import com.groom.cloudlibrarian.login.jwt.JWTUtil;
 import com.groom.cloudlibrarian.login.oauth2.facebook.FacebookUserDetails;
 import com.groom.cloudlibrarian.login.oauth2.google.GoogleUserDetails;
 import com.groom.cloudlibrarian.login.oauth2.kakao.KakaoUserDetails;
 import com.groom.cloudlibrarian.login.oauth2.naver.NaverUserDetails;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+
+import java.util.Collection;
+import java.util.Iterator;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +26,7 @@ import org.springframework.stereotype.Service;
 public class CustomOauth2UserService extends DefaultOAuth2UserService {
 
     private final MemberRepository memberRepository;
+    private final JWTUtil jwtUtil;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -48,18 +54,25 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
                 break;
         }
         String providerId = oAuth2UserInfo.getProviderId();
-        String email = oAuth2UserInfo.getEmail();
-        String loginId = provider + "_" + providerId;
+        String loginId = oAuth2UserInfo.getEmail();
         String name = oAuth2UserInfo.getName();
+        String image = oAuth2UserInfo.getImage();
         Member findMember = memberRepository.findByLoginId(loginId);
         Member member;
         if (findMember == null) {
+            // JWTUtil에 token 생성 요청
+            String accessToken = jwtUtil.createAccessToken(loginId, MemberRole.USER.toString(), 60*60*1000L);
+            String refreshToken = jwtUtil.createRefreshToken(24*60*60*1000L);
+
             member = Member.builder()
                     .loginId(loginId)
+                    .password(accessToken)
+                    .refreshToken(refreshToken)
                     .nickname(name)
                     .provider(provider)
                     .providerId(providerId)
                     .role(MemberRole.USER)
+                    .image(image)
                     .build();
             memberRepository.save(member);
         } else{

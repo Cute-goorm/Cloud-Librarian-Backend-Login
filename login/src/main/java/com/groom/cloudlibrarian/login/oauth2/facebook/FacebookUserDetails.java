@@ -16,4 +16,6 @@ public class FacebookUserDetails implements OAuth2UserInfo {
     public String getEmail() { return (String) attributes.get("email"); }
     @Override
     public String getName() { return (String) attributes.get("name"); }
+    @Override
+    public String getImage() { return (String) ((Map) attributes.get("properties")).get("profile_image"); }
 }

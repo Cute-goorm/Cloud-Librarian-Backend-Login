@@ -1,6 +1,7 @@
 package com.groom.cloudlibrarian.login.controller;
 
 import com.groom.cloudlibrarian.login.MemberService;
+import com.groom.cloudlibrarian.login.WebConfig;
 import com.groom.cloudlibrarian.login.dto.JoinRequest;
 import com.groom.cloudlibrarian.login.dto.LoginRequest;
 import com.groom.cloudlibrarian.login.dto.Member;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @Slf4j
 public class AuthController {
+    private final String domain = WebConfig.domain;
     private final MemberService memberService;
     private final JWTUtil jwtUtil;
     @GetMapping("/login/oauth")
@@ -46,13 +48,13 @@ public class AuthController {
         if(member==null){
             return "ID 또는 비밀번호가 일치하지 않습니다!";
         }
-        String token = jwtUtil.createJwt(member.getLoginId(), member.getRole().name(), 1000 * 60 * 60L);
+        String token = jwtUtil.createAccessToken(member.getLoginId(), member.getRole().name(), 1000 * 60 * 60L);
         return token;
     }
     @GetMapping("/signup")
     public String joinPage() {
         log.info("get signup");
-        String redirect = "redirect:localhost:3000/signup";
+        String redirect = "redirect:" + domain + "/signup";
         return redirect;
     }
     @PostMapping("/signup")
@@ -69,6 +71,6 @@ public class AuthController {
         // 에러가 존재하지 않을 시 joinRequest 통해서 회원가입 완료
         memberService.securityJoin(joinRequest);
         // 회원가입 시 홈 화면으로 이동
-        return "redirect:localhost:3000/home";
+        return "redirect:" + domain + "/home";
     }
 }

@@ -18,7 +18,9 @@ public class Member {
 
     private String loginId;
     private String password;
+    private String refreshToken;
     private String nickname;
+    private String image;
 
     @Enumerated(EnumType.STRING)
     private MemberRole role;

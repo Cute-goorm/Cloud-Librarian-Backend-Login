@@ -1,6 +1,5 @@
 package com.groom.cloudlibrarian.login.jwt;
 
-import com.groom.cloudlibrarian.login.oauth2.CustomOauth2UserDetails;
 import com.groom.cloudlibrarian.login.dto.Member;
 import com.groom.cloudlibrarian.login.MemberRole;
 import jakarta.servlet.FilterChain;
@@ -15,7 +14,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -56,7 +54,7 @@ public class JWTFilter extends OncePerRequestFilter {
         member.setPassword("임시 비밀번호");
         member.setRole(MemberRole.valueOf(role));
         // UserDetails에 회원 정보 객체 담기
-        CustomOauth2UserDetails customUserDetails = new CustomOauth2UserDetails(member, new HashMap<>());
+        CustomSecurityUserDetails customUserDetails = new CustomSecurityUserDetails(member);
         // 스프링 시큐리티 인증 토큰 생성
         Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
         // 세션에 사용자 등록 => 일시적으로 user 세션 생성

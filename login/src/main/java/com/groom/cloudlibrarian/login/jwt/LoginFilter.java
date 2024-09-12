@@ -1,10 +1,10 @@
 package com.groom.cloudlibrarian.login.jwt;
 
-import com.groom.cloudlibrarian.login.oauth2.CustomOauth2UserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -16,11 +16,13 @@ import java.util.Collection;
 import java.util.Iterator;
 
 @RequiredArgsConstructor
+@Slf4j
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final AuthenticationManager authenticationManager;
     private final JWTUtil jwtUtil;
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
+        log.info("attemptAuthentication");
         String loginId = obtainUsername(request);
         String password = obtainPassword(request);
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(loginId, password, null);
@@ -29,8 +31,9 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     // 로그인 성공 시
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) {
+        log.info("successfulAuthentication");
         // username 추출
-        CustomOauth2UserDetails customUserDetails = (CustomOauth2UserDetails) authentication.getPrincipal();
+        CustomSecurityUserDetails customUserDetails = (CustomSecurityUserDetails) authentication.getPrincipal();
         String username = customUserDetails.getUsername();
         // role 추출
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
@@ -38,11 +41,14 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
         // JWTUtil에 token 생성 요청
-        String token = jwtUtil.createJwt(username, role, 60*60*1000L);
+        String accessToken = jwtUtil.createAccessToken(username, role, 60*60*1000L);
+        String refreshToken = jwtUtil.createRefreshToken(24*60*60*1000L);
         // JWT를 response에 담아서 응답 (header 부분에)
         // key : "Authorization"
         // value : "Bearer " (인증방식) + token
-        response.addHeader("Authorization", "Bearer " + token);
+        response.addHeader("Authorization", "Bearer " + accessToken);
+        response.addHeader("RefreshToken", "Bearer " + refreshToken);
+        log.info("Authorization : {}\nRefreshToken : {}", "Bearer " + accessToken, refreshToken);
     }
     // 로그인 실패 시
     @Override

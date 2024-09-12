@@ -1,31 +1,18 @@
-package com.groom.cloudlibrarian.login.oauth2;
+package com.groom.cloudlibrarian.login.jwt;
 
 import com.groom.cloudlibrarian.login.dto.Member;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 
-public class CustomOauth2UserDetails implements UserDetails, OAuth2User {
+public class CustomSecurityUserDetails implements UserDetails {
     private final Member member;
-    private Map<String, Object> attributes;
-    public CustomOauth2UserDetails(Member member, Map<String, Object> attributes) {
+    public CustomSecurityUserDetails(Member member) {
         this.member = member;
-        this.attributes = attributes;
     }
-    @Override
-    public Map<String, Object> getAttributes() {
-        return attributes;
-    }
-
-    @Override
-    public String getName() {
-        return null;
-    }
-
+    // 현재 user의 role을 반환 (ex. "ROLE_ADMIN" / "ROLE_USER" 등)
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Collection<GrantedAuthority> collection = new ArrayList<>();
@@ -35,18 +22,18 @@ public class CustomOauth2UserDetails implements UserDetails, OAuth2User {
                 return member.getRole().name();
             }
         });
-
         return collection;
     }
+    // user의 비밀번호 반환
     @Override
     public String getPassword() {
         return member.getPassword();
     }
+    // user의 username 반환
     @Override
     public String getUsername() {
         return member.getLoginId();
     }
-    public String getRefreshToken(){return member.getRefreshToken();}
     @Override
     public boolean isAccountNonExpired() {
         return true;

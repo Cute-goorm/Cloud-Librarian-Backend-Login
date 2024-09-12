@@ -80,7 +80,7 @@ public class JWTLoginController {
         if(member==null){
             return "ID 또는 비밀번호가 일치하지 않습니다!";
         }
-        String token = jwtUtil.createJwt(member.getLoginId(), member.getRole().name(), 1000 * 60 * 60L);
+        String token = jwtUtil.createAccessToken(member.getLoginId(), member.getRole().name(), 1000 * 60 * 60L);
         return token;
     }
     // postman - Headers: {Authorization: Bearer [login 시 받은 jwt토큰]}
