@@ -1,5 +1,6 @@
 package com.groom.cloudlibrarian.login.oauth2;
 
+import com.groom.cloudlibrarian.login.MemberRole;
 import com.groom.cloudlibrarian.login.dto.Member;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -38,6 +39,9 @@ public class CustomOauth2UserDetails implements UserDetails, OAuth2User {
 
         return collection;
     }
+    public MemberRole getRole(){
+        return member.getRole();
+    }
     @Override
     public String getPassword() {
         return member.getPassword();
@@ -46,7 +50,6 @@ public class CustomOauth2UserDetails implements UserDetails, OAuth2User {
     public String getUsername() {
         return member.getLoginId();
     }
-    public String getRefreshToken(){return member.getRefreshToken();}
     @Override
     public boolean isAccountNonExpired() {
         return true;

@@ -22,7 +22,8 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     private final JWTUtil jwtUtil;
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-        log.info("attemptAuthentication");
+        String path = request.getRequestURI();
+        log.info("LoginFilter attemptAuthentication api : {}", path);
         String loginId = obtainUsername(request);
         String password = obtainPassword(request);
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(loginId, password, null);

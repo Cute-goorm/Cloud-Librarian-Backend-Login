@@ -1,5 +1,6 @@
 package com.groom.cloudlibrarian.login.jwt;
 
+import com.groom.cloudlibrarian.login.MemberRole;
 import com.groom.cloudlibrarian.login.dto.Member;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -24,6 +25,7 @@ public class CustomSecurityUserDetails implements UserDetails {
         });
         return collection;
     }
+    public MemberRole getRole() {return member.getRole();}
     // user의 비밀번호 반환
     @Override
     public String getPassword() {

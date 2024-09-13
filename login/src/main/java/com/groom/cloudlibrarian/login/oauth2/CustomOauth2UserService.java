@@ -60,14 +60,8 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
         Member findMember = memberRepository.findByLoginId(loginId);
         Member member;
         if (findMember == null) {
-            // JWTUtil에 token 생성 요청
-            String accessToken = jwtUtil.createAccessToken(loginId, MemberRole.USER.toString(), 60*60*1000L);
-            String refreshToken = jwtUtil.createRefreshToken(24*60*60*1000L);
-
             member = Member.builder()
                     .loginId(loginId)
-                    .password(accessToken)
-                    .refreshToken(refreshToken)
                     .nickname(name)
                     .provider(provider)
                     .providerId(providerId)

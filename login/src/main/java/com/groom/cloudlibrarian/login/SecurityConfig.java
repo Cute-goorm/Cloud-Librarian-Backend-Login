@@ -2,6 +2,7 @@ package com.groom.cloudlibrarian.login;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.groom.cloudlibrarian.login.dto.Member;
+import com.groom.cloudlibrarian.login.jwt.CustomSecurityUserDetails;
 import com.groom.cloudlibrarian.login.jwt.JWTFilter;
 import com.groom.cloudlibrarian.login.jwt.JWTUtil;
 import com.groom.cloudlibrarian.login.jwt.LoginFilter;
@@ -83,20 +84,28 @@ public class SecurityConfig {
         http.formLogin((auth) -> auth
                 .loginPage(domain + "/login")
 //                .loginProcessingUrl("/oauth2-login/loginProc")
-                .loginProcessingUrl("/api/auth/login")
+                .loginProcessingUrl("/api/auth/login/form")
                 .usernameParameter("loginId")
                 .passwordParameter("password")
                 .defaultSuccessUrl(domain + "/home")
                 .successHandler((request, response, authentication)->{
+                    CustomSecurityUserDetails principal = (CustomSecurityUserDetails)authentication.getPrincipal();
                     log.info("\n\nsuccessHandler\nrequest : {}\nresponse : {}\nauthentication : {}\n\n", request, response, authentication);
-                    response.sendRedirect(domain + "/home");
-//                    response.sendRedirect(domain + "/fail");
+                    log.info("successHandler auth : {}", principal);
+                    // JWTUtil에 token 생성 요청
+                    String loginId = principal.getUsername();
+                    String memberRole = principal.getRole().name();
+                    String accessToken = jwtUtil.createAccessToken(loginId, memberRole, 60*60*1000L);
+                    String refreshToken = jwtUtil.createRefreshToken(24*60*60*1000L);
+
+                    response.addHeader("Authorization", "Bearer " + accessToken);
+                    response.addHeader("RefreshToken", "Bearer " + refreshToken);
+//                    response.sendRedirect(domain + "/home");
                 })
                 .failureUrl("/oauth2-login/login")
                 .failureHandler((request, response, authentication)->{
                     log.info("\n\nfailureHandler\nrequest : {}\nresponse : {}\nauthentication : {}\n\n", request, response, authentication);
-                    response.sendRedirect("/oauth2-login/login");
-//                    response.sendRedirect(domain + "/fail");
+                    response.sendRedirect(domain + "/login");
                 })
                 .permitAll());
         // OAuth 2.0 로그인 방식 설정
@@ -106,15 +115,20 @@ public class SecurityConfig {
                 .successHandler((request, response, authentication)->{
                     CustomOauth2UserDetails principal = (CustomOauth2UserDetails)authentication.getPrincipal();
                     log.info("successHandler auth : {}", principal);
+                    // JWTUtil에 token 생성 요청
+                    String loginId = principal.getUsername();
+                    String memberRole = principal.getRole().name();
+                    String accessToken = jwtUtil.createAccessToken(loginId, memberRole, 60*60*1000L);
+                    String refreshToken = jwtUtil.createRefreshToken(24*60*60*1000L);
 
-                    response.addHeader("Authorization", "Bearer " + principal.getPassword());
-                    response.addHeader("RefreshToken", "Bearer " + principal.getRefreshToken());
-                    response.sendRedirect(domain);
+                    response.addHeader("Authorization", "Bearer " + accessToken);
+                    response.addHeader("RefreshToken", "Bearer " + refreshToken);
+//                    response.sendRedirect(domain + "/home");
                 })
                 .failureUrl(domain + "/fail")
                 .failureHandler((request, response, authentication)->{
                     log.info("\n\nfailureHandler\nrequest : {}\nresponse : {}\nexception : {}\n\n", request, response, authentication);
-                    response.sendRedirect(domain + "/fail");
+                    response.sendRedirect(domain + "/login");
                 })
                 .permitAll());
         // 로그아웃 URL 설정
@@ -123,12 +137,12 @@ public class SecurityConfig {
                 .logoutSuccessUrl(domain));
         // 개발단계에서만 csrf 잠시 꺼두기
         http.csrf((auth) -> auth.disable());
-//        // 세션 설정
-//        http.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-//        // 새로 만든 로그인 필터를 원래의 (UsernamePasswordAuthenticationFilter)의 자리에 넣음
-//        http.addFilterAt(new LoginFilter(authenticationManager(configuration), jwtUtil), UsernamePasswordAuthenticationFilter.class);
-//        // 로그인 필터 이전에 JWTFilter를 넣음
-//        http.addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
+        // 세션 설정
+        http.sessionManagement((session) -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        // 새로 만든 로그인 필터를 원래의 (UsernamePasswordAuthenticationFilter)의 자리에 넣음
+        http.addFilterAt(new LoginFilter(authenticationManager(configuration), jwtUtil), UsernamePasswordAuthenticationFilter.class);
+        // 로그인 필터 이전에 JWTFilter를 넣음
+        http.addFilterBefore(new JWTFilter(jwtUtil), LoginFilter.class);
 
         return http.build();
 //        // oauth2

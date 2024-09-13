@@ -22,35 +22,36 @@ public class AuthController {
     private final String domain = WebConfig.domain;
     private final MemberService memberService;
     private final JWTUtil jwtUtil;
-    @GetMapping("/login/oauth")
+    @GetMapping("/login/oauth2/oauth")
     public String oauthLogin(String provider) {
         String redirect = "redirect:/oauth2/authorization" + provider;
         log.info("{} login, {}", provider, redirect);
         return redirect;
     }
-    @GetMapping("login/kakao")
+    @GetMapping("login/oauth2/kakao")
     public String kakaoLogin() {
         String redirect = "redirect:/oauth2/authorization/kakao";
         log.info("kakao login, {}", redirect);
         return redirect;
     }
-    @GetMapping("login/google")
+    @GetMapping("login/oauth2/google")
     public String googleLogin() {
         String redirect = "redirect:/oauth2/authorization/google";
         log.info("google login, {}", redirect);
         return redirect;
     }
-    @PostMapping("/login")
-//    /security-config/form-login/login-processing-url
-    public String formLogin(@RequestBody LoginRequest loginRequest){
-        log.info("{}, {}", loginRequest.getLoginId(), loginRequest.getPassword());
-        Member member = memberService.login(loginRequest);
-        if(member==null){
-            return "ID 또는 비밀번호가 일치하지 않습니다!";
-        }
-        String token = jwtUtil.createAccessToken(member.getLoginId(), member.getRole().name(), 1000 * 60 * 60L);
-        return token;
-    }
+//    @PostMapping("/login/form")
+//    @ResponseBody
+//    //    /security-config/form-login/login-processing-url
+//    public String formLogin(@Valid @ModelAttribute LoginRequest loginRequest){
+//        log.info("formLogin loginId : {}, password: {}", loginRequest.getLoginId(), loginRequest.getPassword());
+//        Member member = memberService.login(loginRequest);
+//        if(member==null){
+//            return "ID 또는 비밀번호가 일치하지 않습니다!";
+//        }
+//        String token = jwtUtil.createAccessToken(member.getLoginId(), member.getRole().name(), 1000 * 60 * 60L);
+//        return token;
+//    }
     @GetMapping("/signup")
     public String joinPage() {
         log.info("get signup");
