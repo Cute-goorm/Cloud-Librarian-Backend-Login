@@ -23,7 +23,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         String path = request.getRequestURI();
-        log.info("LoginFilter attemptAuthentication api : {}", path);
+        log.info("Authentication attemptAuthentication() api uri: {}", path);
         String loginId = obtainUsername(request);
         String password = obtainPassword(request);
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(loginId, password, null);
@@ -32,7 +32,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     // 로그인 성공 시
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) {
-        log.info("successfulAuthentication");
+        log.info("void successfulAuthentication()");
         // username 추출
         CustomSecurityUserDetails customUserDetails = (CustomSecurityUserDetails) authentication.getPrincipal();
         String username = customUserDetails.getUsername();
@@ -42,14 +42,14 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         GrantedAuthority auth = iterator.next();
         String role = auth.getAuthority();
         // JWTUtil에 token 생성 요청
-        String accessToken = jwtUtil.createAccessToken(username, role, 60*60*1000L);
-        String refreshToken = jwtUtil.createRefreshToken(24*60*60*1000L);
+        String accessToken = jwtUtil.createAccessToken(username, role);
+        String refreshToken = jwtUtil.createRefreshToken();
         // JWT를 response에 담아서 응답 (header 부분에)
         // key : "Authorization"
         // value : "Bearer " (인증방식) + token
         response.addHeader("Authorization", "Bearer " + accessToken);
         response.addHeader("RefreshToken", "Bearer " + refreshToken);
-        log.info("Authorization : {}\nRefreshToken : {}", "Bearer " + accessToken, refreshToken);
+        log.info("Authorization : Bearer {}\nRefreshToken : Bearer {}", accessToken, refreshToken);
     }
     // 로그인 실패 시
     @Override
