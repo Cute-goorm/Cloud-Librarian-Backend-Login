@@ -1,6 +1,5 @@
 package com.groom.cloudlibrarian.login.jwt;
 
-import com.groom.cloudlibrarian.login.oauth2.CustomOauth2UserDetails;
 import com.groom.cloudlibrarian.login.dto.Member;
 import com.groom.cloudlibrarian.login.MemberRole;
 import jakarta.servlet.FilterChain;
@@ -8,25 +7,28 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 @RequiredArgsConstructor
+@Slf4j
 public class JWTFilter extends OncePerRequestFilter {
     private final JWTUtil jwtUtil;
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        String path = request.getRequestURI();
+        log.info("void doFilterInternal() - api uri : {}", path);
         // request에서 Authorization 헤더 찾음
         String authorization = request.getHeader("Authorization");
         // Authorization 헤더 검증
         // Authorization 헤더가 비어있거나 "Bearer " 로 시작하지 않은 경우
         if(authorization == null || !authorization.startsWith("Bearer ")){
-            System.out.println("token null");
+            log.warn("token null || token doesn't start with 'Bearer '");
             // 토큰이 유효하지 않으므로 request와 response를 다음 필터로 넘겨줌
             filterChain.doFilter(request, response);
             // 메서드 종료
@@ -34,13 +36,29 @@ public class JWTFilter extends OncePerRequestFilter {
         }
         // Authorization에서 Bearer 접두사 제거
         String token = authorization.split(" ")[1];
-        // token 소멸 시간 검증
-        // 유효기간이 만료한 경우
+        // accessToken 소멸 시간 검증
+        // accessToken 유효기간이 만료한 경우
         if(jwtUtil.isExpired(token)){
-            System.out.println("token expired");
-            filterChain.doFilter(request, response);
-            // 메서드 종료
-            return;
+            log.warn("accessToken expired");
+            String refreshToken = request.getHeader("RefreshToken");
+            if(refreshToken== null || !refreshToken.startsWith("Bearer ")){
+                log.warn("refreshToken null || refreshToken doesn't start with 'Bearer '");
+                // 토큰이 유효하지 않으므로 request와 response를 다음 필터로 넘겨줌
+                filterChain.doFilter(request, response);
+                // 메서드 종료
+                return;
+            }
+            if(jwtUtil.isExpired(refreshToken)){
+                log.warn("refreshToken expired");
+                filterChain.doFilter(request, response);
+                // 메서드 종료
+                return;
+            }
+            // accessToken 재발급
+            String loginId = jwtUtil.getLoginId(token);
+            String role = jwtUtil.getRole(token);
+            token = jwtUtil.createAccessToken(loginId, role);
+            response.addHeader("Authorization", "Bearer " + token);
         }
 
         // 최종적으로 token 검증 완료 => 일시적인 session 생성
@@ -54,7 +72,7 @@ public class JWTFilter extends OncePerRequestFilter {
         member.setPassword("임시 비밀번호");
         member.setRole(MemberRole.valueOf(role));
         // UserDetails에 회원 정보 객체 담기
-        CustomOauth2UserDetails customUserDetails = new CustomOauth2UserDetails(member, new HashMap<>());
+        CustomSecurityUserDetails customUserDetails = new CustomSecurityUserDetails(member);
         // 스프링 시큐리티 인증 토큰 생성
         Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, customUserDetails.getAuthorities());
         // 세션에 사용자 등록 => 일시적으로 user 세션 생성

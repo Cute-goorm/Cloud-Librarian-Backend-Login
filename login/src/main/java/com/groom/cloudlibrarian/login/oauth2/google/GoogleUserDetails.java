@@ -24,4 +24,6 @@ public class GoogleUserDetails implements OAuth2UserInfo {
     public String getName() {
         return (String) attributes.get("name");
     }
+    @Override
+    public String getImage() { return (String) attributes.get("picture"); }
 }

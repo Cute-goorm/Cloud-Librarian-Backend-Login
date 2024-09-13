@@ -1,36 +1,21 @@
-package com.groom.cloudlibrarian.login.oauth2;
+package com.groom.cloudlibrarian.login.jwt;
 
 import com.groom.cloudlibrarian.login.MemberRole;
 import com.groom.cloudlibrarian.login.dto.Member;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 
 @Slf4j
-public class CustomOauth2UserDetails implements UserDetails, OAuth2User {
+public class CustomSecurityUserDetails implements UserDetails {
     private final Member member;
-    private Map<String, Object> attributes;
-    public CustomOauth2UserDetails(Member member, Map<String, Object> attributes) {
+    public CustomSecurityUserDetails(Member member) {
         this.member = member;
-        this.attributes = attributes;
     }
-    @Override
-    public Map<String, Object> getAttributes() {
-        log.info("getAttributes()");
-        return attributes;
-    }
-
-    @Override
-    public String getName() {
-        log.info("getName()");
-        return null;
-    }
-
+    // 현재 user의 role을 반환 (ex. "ADMIN" / "USER" 등)
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         log.info("Collection<? extends GrantedAuthority> getAuthorities()");
@@ -43,18 +28,20 @@ public class CustomOauth2UserDetails implements UserDetails, OAuth2User {
         });
         return collection;
     }
-    public MemberRole getRole(){
+    public MemberRole getRole() {
         log.info("getRole() - member.role");
         return member.getRole();
     }
+    // Security user의 비밀번호 반환 (password로 설정함)
     @Override
     public String getPassword() {
         log.info("getPassword() - member.password");
         return member.getPassword();
     }
+    // Security user의 username 반환 (loginId로 설정함)
     @Override
     public String getUsername() {
-        log.info("getUsername() - member.loginId");
+        log.info("getUsername() - member.loginid()");
         return member.getLoginId();
     }
     @Override

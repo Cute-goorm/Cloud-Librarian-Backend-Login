@@ -19,13 +19,12 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class CustomOauth2UserService extends DefaultOAuth2UserService {
-
     private final MemberRepository memberRepository;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oAuth2User = super.loadUser(userRequest);
-        log.info("getAttributes : {}",oAuth2User.getAttributes());
+        log.info("OAuth2User loadUser() - getAttributes : {}", oAuth2User.getAttributes());
         String provider = userRequest.getClientRegistration().getRegistrationId();
         OAuth2UserInfo oAuth2UserInfo = null;
         // 소셜 서비스 로그인 구분
@@ -48,9 +47,9 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
                 break;
         }
         String providerId = oAuth2UserInfo.getProviderId();
-        String email = oAuth2UserInfo.getEmail();
-        String loginId = provider + "_" + providerId;
+        String loginId = oAuth2UserInfo.getEmail();
         String name = oAuth2UserInfo.getName();
+        String image = oAuth2UserInfo.getImage();
         Member findMember = memberRepository.findByLoginId(loginId);
         Member member;
         if (findMember == null) {
@@ -60,6 +59,7 @@ public class CustomOauth2UserService extends DefaultOAuth2UserService {
                     .provider(provider)
                     .providerId(providerId)
                     .role(MemberRole.USER)
+                    .image(image)
                     .build();
             memberRepository.save(member);
         } else{
